@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Calculos</string>
+    <string name="numero">Número</string>
+    <string name="Somar">Somar</string>
+    <string name="Resultado">Resultado</string>
+    <string name="title_activity_cadastro">Cadastro</string>
+</resources>
