@@ -2,23 +2,31 @@ package br.fadep.formulario;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import br.fadep.formulario.adapter.PessoaAdapter;
+import br.fadep.formulario.model.Pessoa;
+
 public class ActCadastro extends Activity {
 
     private TextView txtNome,txtCpf, txtRg, txtEmail;
     private EditText edtNome, edtCpf, edtRg, edtEmail;
-    private Button btnCancelar, btnSalvar;
+    private Button btnNovo, btnSalvar,btnExcluir;
     private Spinner spnSexo;
-
+    private Pessoa pessoa = null;
+    private PessoaAdapter pessoaAdapter;
+    private ListView listView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,19 +40,13 @@ public class ActCadastro extends Activity {
         edtCpf = (EditText)findViewById(R.id.edtCpf);
         edtRg = (EditText)findViewById(R.id.edtRg);
         edtEmail = (EditText)findViewById(R.id.edtEmail);
-        btnCancelar = (Button) findViewById(R.id.btnCancelar);
+        btnNovo = (Button) findViewById(R.id.btnNovo);
+        btnExcluir = (Button) findViewById(R.id.btnExcluir);
         btnSalvar = (Button)findViewById(R.id.btnSalvar);
-        btnCancelar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                cancelar(v);
-            }
-        });
-        btnSalvar.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View vi){
-                salvar();
-            }
-        });
+        listView = (ListView) findViewById(R.id.listView);
+
+        pessoaAdapter = new PessoaAdapter(this);
+        listView.setAdapter(pessoaAdapter);
 
         List<String> sexos = new ArrayList<>();
         sexos.add("Masculino");
@@ -53,12 +55,49 @@ public class ActCadastro extends Activity {
                 android.R.layout.simple_list_item_1,sexos.toArray());
         spnSexo.setAdapter(adapter);
 
+
+        btnNovo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pessoa = null;
+                limpar();
+            }
+        });
+        btnExcluir.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                excluir();
+            }
+        });
+        btnSalvar.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View vi){
+                salvar();
+            }
+        });
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                pessoa = (Pessoa)pessoaAdapter.getItem(position);
+                setPessoa(pessoa);
+            }
+        });
+
+
     }
 
+    public void limpar(){
+        edtEmail.setText("");
+        edtRg.setText("");
+        edtCpf.setText("");
+        edtNome.setText("");
+    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    public void excluir(){
+        if (pessoa != null){
+            pessoaAdapter.removePessoa(pessoa);
+        }else {
+            Toast.makeText(this,"Favor selecionar uma pessoa!",Toast.LENGTH_LONG).show();
+        }
     }
 
     public void cancelar(View view){
@@ -86,6 +125,36 @@ public class ActCadastro extends Activity {
                     Toast.LENGTH_SHORT).show();
             return;
         }
+        if (pessoa == null) {
+            pessoa = new Pessoa();
+        }
+        pessoa.setNome(edtNome.getText().toString());
+        pessoa.setRg(edtRg.getText().toString());
+        pessoa.setCpf(edtCpf.getText().toString());
+        pessoa.setEmail(edtEmail.getText().toString());
+        pessoa.setSexo(spnSexo.getSelectedItem().toString());
+        if (pessoaAdapter.contains(pessoa)){
+            pessoaAdapter.updatePessoa(pessoa);
+        }else {
+            pessoaAdapter.addPessoa(pessoa);
+        }
+        pessoa = null;
+    }
+
+    public void setPessoa(Pessoa pes){
+        this.pessoa = pes;
+        edtCpf.setText(pessoa.getCpf());
+        edtRg.setText(pessoa.getRg());
+        edtNome.setText(pessoa.getNome());
+        edtEmail.setText(pessoa.getEmail());
+        SpinnerAdapter adapter = spnSexo.getAdapter();
+        String sexo = pessoa.getSexo();
+        for (int w = 0; w < adapter.getCount();w++){
+            if (sexo.equals(adapter.getItem(w))){
+                spnSexo.setSelection(w);
+                break;
+            }
+        }
     }
 
     @Override
@@ -102,13 +171,9 @@ public class ActCadastro extends Activity {
     @Override
     protected void onRestoreInstanceState(Bundle state) {
         super.onRestoreInstanceState(state);
-//        SpinnerAdapter adapter = spnSexo.getAdapter();
-
-//        spnSexo.setSelection();
         edtNome.setText(state.getString("nome"));
         edtCpf.setText(state.getString("cpf"));
         edtRg.setText(state.getString("rg"));
         edtEmail.setText(state.getString("email"));
-
     }
 }
